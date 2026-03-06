@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Para o Meu Amor ❤️</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@300;900&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-dark: #050505;
+      --primary: #ff2d55;
+      --secondary: #ffb3c1;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: white;
+      font-family: 'Inter', 'Helvetica Neue', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ─── TELA DE INTRO ─── */
+    #intro-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: #050505;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      transition: opacity 1s ease, visibility 1s ease;
+    }
+    #intro-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    #intro-screen p {
+      font-family: 'Dancing Script', 'Brush Script MT', cursive;
+      font-size: 1.4rem;
+      color: var(--secondary);
+      opacity: 0.8;
+      text-align: center;
+      padding: 0 2rem;
+    }
+    #btn-abrir {
+      background: none;
+      border: 2px solid var(--primary);
+      color: white;
+      font-family: 'Dancing Script', 'Brush Script MT', cursive;
+      font-size: 1.8rem;
+      padding: 1rem 3rem;
+      border-radius: 60px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 0 30px rgba(255,45,85,0.2);
+    }
+    #btn-abrir:hover {
+      transform: scale(1.06);
+      box-shadow: 0 0 50px rgba(255,45,85,0.45);
+    }
+    #btn-abrir::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(255,45,85,0.2), transparent 70%);
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.4; }
+      50%       { opacity: 1;   }
+    }
+
+    /* ─── SCROLL CONTAINER ─── */
+    .container {
+      height: 3800vh;
+      position: relative;
+    }
+    .sticky-frame {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* ─── FUNDO DE MESA ─── */
+    .wood-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(0,0,0,0.62), rgba(0,0,0,0.62)),
+        url('https://images.unsplash.com/photo-1517466787919-ec4577a04f5b?q=80&w=2000') center/cover;
+      opacity: 0;
+      z-index: 0;
+    }
+
+    /* ─── STEPS ─── */
+    .step {
+      position: absolute;
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+      opacity: 0;
+      filter: blur(20px);
+      transform: scale(0.8);
+      z-index: 10;
+    }
+    .phrase {
+      font-family: 'Dancing Script', 'Brush Script MT', cursive;
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      color: var(--secondary);
+      line-height: 1.6;
+    }
+
+    /* ─── CONTADORES ─── */
+    .counter-val {
+      font-size: clamp(3rem, 10vw, 5rem);
+      font-weight: 900;
+      display: block;
+      background: linear-gradient(to bottom, #fff, var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+      margin-bottom: 0.25rem;
+    }
+    .counter-label {
+      font-family: 'Dancing Script', 'Brush Script MT', cursive;
+      font-size: 1.5rem;
+      color: var(--secondary);
+    }
+
+    /* ─── STACK DE FOTOS ─── */
+    .photo-stack {
+      position: relative;
+      width: 240px;
+      height: 320px;
+      z-index: 20;
+    }
+    .card {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: white;
+      border: 6px solid white;
+      border-bottom: 44px solid white;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border-radius: 2px;
+      overflow: visible;
+    }
+    .card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .card-caption {
+      position: absolute;
+      bottom: -34px;
+      width: 100%;
+      text-align: center;
+      color: #444;
+      font-family: 'Dancing Script', cursive;
+      font-size: 0.95rem;
+    }
+
+    /* ─── CARTA (wrapper sem .step para não herdar scale) ─── */
+    #carta-wrapper {
+      position: absolute;
+      width: 90%;
+      max-width: 560px;
+      text-align: center;
+      opacity: 0;
+      z-index: 10;
+    }
+    .line {
+      font-family: 'Dancing Script', 'Brush Script MT', cursive;
+      font-size: clamp(1.4rem, 4vw, 1.9rem);
+      line-height: 2.1;
+      color: #fdfdfd;
+      opacity: 0;
+      filter: blur(10px);
+      transform: translateY(18px);
+      display: block;
+    }
+
+    /* ─── FINAL ─── */
+    #final-love {
+      position: absolute;
+      text-align: center;
+      opacity: 0;
+      filter: blur(20px);
+      z-index: 10;
+    }
+    #final-love h1 {
+      font-family: 'Dancing Script', cursive;
+      font-size: clamp(3rem, 10vw, 5rem);
+      color: var(--secondary);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     ⚙️  EDITE APENAS ESTE BLOCO
+     ══════════════════════════════════════════════════ -->
+<script>
+const CONFIG = {
+
+  nomeEla: "Meu Amor",
+  dataInicio: new Date("2024-06-29T20:00:00"),
+  fraseIntro: "Tenho um presentinho pra você...",
+
+  // ── MÚSICA MP3 ────────────────────────────────────────────────────
+  // Coloque o arquivo .mp3 na MESMA pasta que este index.html
+  // e escreva o nome exato do arquivo aqui:
+  musicaArquivo: "musica.mp3",
+  // ─────────────────────────────────────────────────────────────────
+
+  fotos: [
+    { src: "20240818_020445000_iOS.jpg", cap: "Aniversário"         },
+    { src: "20240913_235040810_iOS.jpg", cap: "Cineminha"           },
+    { src: "20251214_195420173_iOS.jpg", cap: "Seu sorriso e olhar" },
+    { src: "20250628_231815134_iOS.jpg", cap: "Minha paz"           },
+    { src: "20251223_183400103_iOS.jpg", cap: "hehehe"              },
+    { src: "20251225_224252377_iOS.jpg", cap: "Te amo"              },
+    { src: "20250630_003456874_iOS.jpg", cap: "Sempre nós"          },
+    { src: "20251227_202759579_iOS.jpg", cap: "Meu porto"           },
+    { src: "20250629_214700000_iOS.jpg", cap: "Eternidade"          },
+  ],
+
+  linhasCarta: [
+    "Desde aquele dia 29 que te pedi em namoro,",
+    "minha vida mudou completamente",
+    "meus dias ficaram mais coloridos ao seu lado.",
+    "Você é minha melhor escolha e para sempre será.",
+    "Apesar de tudo que passamos",
+    "quero continuar melhorando todos os dias",
+    "para que possamos enfim um dia casar",
+    "e de verdade eu espero que seja com você amor!",
+    "Eu te amei ontem, amo hoje e amarei amanhã!",
+  ],
+};
+</script>
+
+<!-- Áudio -->
+<audio id="bg-music" loop></audio>
+
+<!-- Intro -->
+<div id="intro-screen">
+  <p id="intro-frase"></p>
+  <button id="btn-abrir" onclick="startExperience()">Abrir ❤️</button>
+</div>
+
+<!-- Experiência -->
+<div class="container" id="main-content" style="visibility:hidden">
+  <div class="wood-bg" id="wood"></div>
+  <div class="sticky-frame" id="frame">
+
+    <div class="step" id="p1">
+      <p class="phrase">Um presentinho para você...</p>
+    </div>
+
+    <div class="step" id="c1">
+      <span class="counter-val" id="val-months">0</span>
+      <span class="counter-label">Meses juntos</span>
+    </div>
+    <div class="step" id="c2">
+      <span class="counter-val" id="val-days">0</span>
+      <span class="counter-label">Dias juntos</span>
+    </div>
+    <div class="step" id="c3">
+      <span class="counter-val" id="val-hours">0</span>
+      <span class="counter-label">Horas juntos</span>
+    </div>
+    <div class="step" id="c4">
+      <span class="counter-val" id="val-mins">0</span>
+      <span class="counter-label">Minutos juntos</span>
+    </div>
+    <div class="step" id="c5">
+      <span class="counter-val" id="val-secs">0</span>
+      <span class="counter-label">Segundos juntos</span>
+    </div>
+
+    <div class="step" id="p3">
+      <p class="phrase">A gente já viveu tanta coisa...</p>
+    </div>
+
+    <div class="step" id="photo-container">
+      <div class="photo-stack" id="stack"></div>
+    </div>
+
+    <div class="step" id="p-pre-letter">
+      <p class="phrase">E eu queria te falar uma coisa também...</p>
+    </div>
+
+    <!-- Cartinha de linhas — SEM envelope depois -->
+    <div id="carta-wrapper">
+      <div id="letter-lines"></div>
+    </div>
+
+    <!-- Final direto após a carta -->
+    <div id="final-love">
+      <h1>Eu te amo!</h1>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  gsap.registerPlugin(ScrollTrigger);
+
+  document.getElementById('intro-frase').textContent = CONFIG.fraseIntro;
+
+  /* ── Áudio MP3 ── */
+  const audio = document.getElementById('bg-music');
+  if (CONFIG.musicaArquivo) {
+    audio.src    = CONFIG.musicaArquivo;
+    audio.volume = 0.5;
+  }
+
+  function startExperience() {
+    if (CONFIG.musicaArquivo) audio.play().catch(() => {});
+    document.getElementById('intro-screen').classList.add('hidden');
+    document.getElementById('main-content').style.visibility = 'visible';
+  }
+
+  /* ── Gerar linhas da carta ── */
+  const letterLines = document.getElementById('letter-lines');
+  CONFIG.linhasCarta.forEach(texto => {
+    const span     = document.createElement('span');
+    span.className = 'line';
+    span.textContent = texto;
+    letterLines.appendChild(span);
+  });
+
+  /* ── Gerar fotos ── */
+  const stackEl    = document.getElementById('stack');
+  const totalFotos = CONFIG.fotos.length;
+
+  CONFIG.fotos.forEach((f, i) => {
+    const card     = document.createElement('div');
+    card.className = 'card';
+    card.id        = `card-${i}`;
+    card.style.zIndex = totalFotos - i;
+    card.innerHTML = `
+      <img src="${f.src}" alt="${f.cap}" loading="lazy">
+      <div class="card-caption">${f.cap}</div>
+    `;
+    stackEl.appendChild(card);
+  });
+
+  /* ── Contador ── */
+  function updateClock() {
+    const diff        = Date.now() - CONFIG.dataInicio.getTime();
+    const totalSecs   = Math.floor(diff / 1000);
+    const totalMins   = Math.floor(diff / 60000);
+    const totalHours  = Math.floor(diff / 3600000);
+    const totalDays   = Math.floor(diff / 86400000);
+    const totalMonths = Math.floor(diff / 2629746000);
+    document.getElementById('val-months').textContent = totalMonths;
+    document.getElementById('val-days').textContent   = totalDays;
+    document.getElementById('val-hours').textContent  = totalHours.toLocaleString('pt-BR');
+    document.getElementById('val-mins').textContent   = totalMins.toLocaleString('pt-BR');
+    document.getElementById('val-secs').textContent   = totalSecs.toLocaleString('pt-BR');
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  /* ══════════════════════════════════════════
+     GSAP TIMELINE
+  ══════════════════════════════════════════ */
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: ".container",
+      start:   "top top",
+      end:     "bottom bottom",
+      scrub:   1.5,
+    }
+  });
+
+  /* 1 · Intro */
+  tl.to("#p1", { opacity:1, filter:"blur(0px)", scale:1, duration:2 })
+    .to("#p1", { opacity:0, scale:0.95, duration:1.5 });
+
+  /* 2 · Contadores */
+  ["#c1","#c2","#c3","#c4","#c5"].forEach(id => {
+    tl.to(id, { opacity:1, filter:"blur(0px)", scale:1, duration:2 })
+      .to(id, { opacity:0, scale:0.95, duration:1.5 });
+  });
+
+  /* 3 · Transição para mesa */
+  tl.to("#p3",   { opacity:1, filter:"blur(0px)", scale:1, duration:2 });
+  tl.to("#wood", { opacity:1, duration:2 }, "<");
+  tl.to("#p3",   { opacity:0, duration:1.5 });
+
+  /* 4 · Fotos */
+  tl.to("#photo-container", { opacity:1, filter:"blur(0px)", scale:1, duration:2 });
+
+  CONFIG.fotos.forEach((_, i) => {
+    if (i < totalFotos - 1) {
+      tl.to(`#card-${i}`, {
+        x:        i % 2 === 0 ? -220 :  220,
+        y:        (i % 3 === 0 ? -30 : 20) + i * 4,
+        rotation: i % 2 === 0 ? -(14 + i * 1.2) : (14 + i * 1.2),
+        scale:    0.85,
+        duration: 3.5,
+        ease:     "power2.inOut",
+        onStart() { document.getElementById(`card-${i}`).style.zIndex = i; },
+      }, "+=0.6");
+    }
+  });
+
+  /* 5 · Volta para o preto */
+  tl.to("#photo-container", { opacity:0, filter:"blur(20px)", duration:2 }, "+=1");
+  tl.to("#wood",             { opacity:0, duration:2 }, "<");
+
+  /* 6 · Pré-carta */
+  tl.to("#p-pre-letter", { opacity:1, filter:"blur(0px)", scale:1, duration:2 });
+  tl.to("#p-pre-letter", { opacity:0, duration:2 }, "+=1");
+
+  /* 7 · Cartinha — wrapper aparece, linhas sobem uma a uma */
+  tl.to("#carta-wrapper", { opacity:1, duration:1.5 });
+
+  gsap.utils.toArray(".line").forEach((linha, i) => {
+    tl.to(linha, {
+      opacity:  1,
+      filter:   "blur(0px)",
+      y:        0,
+      duration: 2,
+      ease:     "power2.out",
+    }, i === 0 ? "+=0.3" : "-=0.8");
+  });
+
+  tl.to("#carta-wrapper", { opacity:0, y:-40, duration:2 }, "+=1.5");
+
+  /* 8 · "Eu te amo!" + confetti — direto, sem envelope */
+  tl.to("#final-love", {
+    opacity:1, filter:"blur(0px)", scale:1.12, duration:3,
+    onStart() {
+      confetti({ particleCount:130, spread:80,  colors:['#ff2d55','#ffb3c1','#fff','#ff6b8a'], origin:{y:0.65} });
+      setTimeout(() =>
+        confetti({ particleCount:90, spread:130, colors:['#ff2d55','#ffb3c1','#fff'], origin:{y:0.5} }), 800);
+    }
+  });
+</script>
+</body>
+</html>
